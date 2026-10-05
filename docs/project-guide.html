@@ -1,0 +1,820 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="source" content="project-guide.md" />
+    <title>Intelligence — Hướng dẫn dự án</title>
+    <link rel="icon" type="image/svg+xml" href="../src/app/icon.svg" />
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #10171e;
+        --panel: #172129;
+        --line: #354650;
+        --text: #e6e9e7;
+        --muted: #b0bdc5;
+        --accent: #a8c6d2;
+        --warm: #d5b995;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font:
+          16px/1.7 system-ui,
+          sans-serif;
+      }
+      a {
+        color: var(--accent);
+        text-underline-offset: 4px;
+      }
+      button {
+        font: inherit;
+        cursor: pointer;
+      }
+      a:focus-visible,
+      button:focus-visible,
+      summary:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 5px;
+      }
+      .wrap {
+        max-width: 1150px;
+        margin: auto;
+        padding: 42px 32px 65px;
+      }
+      .top {
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 18px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .brand {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        font:
+          22px Georgia,
+          serif;
+        color: var(--text);
+      }
+      .brand img {
+        width: 29px;
+        height: 29px;
+      }
+      .hero {
+        padding: 50px 0 34px;
+      }
+      .eyebrow,
+      h3 {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        color: var(--accent);
+      }
+      h1 {
+        font:
+          clamp(36px, 6vw, 60px)/1.1 Georgia,
+          serif;
+        letter-spacing: -1px;
+        max-width: 800px;
+        margin: 18px 0 24px;
+      }
+      h2 {
+        font:
+          30px/1.35 Georgia,
+          serif;
+        margin: 0 0 18px;
+      }
+      h3 {
+        margin: 0 0 10px;
+      }
+      p {
+        margin: 10px 0;
+      }
+      .lead {
+        max-width: 770px;
+        font-size: 19px;
+        color: var(--muted);
+      }
+      .hero-links {
+        display: flex;
+        gap: 18px;
+        flex-wrap: wrap;
+        margin: 25px 0 0;
+      }
+      .scope {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 18px 22px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 5px;
+      }
+      .scope strong {
+        color: var(--accent);
+        white-space: nowrap;
+      }
+      .scope span {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      nav {
+        display: flex;
+        gap: 24px;
+        flex-wrap: wrap;
+        font-size: 13px;
+        margin: 27px 0 46px;
+      }
+      section {
+        margin: 48px 0;
+        border-top: 1px solid var(--line);
+        padding-top: 30px;
+      }
+      .number {
+        font: 12px monospace;
+        color: var(--muted);
+        display: block;
+        letter-spacing: 1px;
+        margin-bottom: 10px;
+      }
+      .flow {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 12px;
+        margin: 25px 0;
+      }
+      .step {
+        position: relative;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        padding: 17px 13px;
+        min-width: 0;
+      }
+      .step:not(:last-child):after {
+        content: "→";
+        position: absolute;
+        right: -15px;
+        top: 25px;
+        color: var(--accent);
+        z-index: 1;
+      }
+      .step b {
+        display: block;
+        font-size: 14px;
+      }
+      .step small {
+        font-size: 12px;
+        color: var(--muted);
+        display: block;
+        margin-top: 9px;
+      }
+      .boundary {
+        display: grid;
+        grid-template-columns: 1fr 1.5fr;
+        gap: 18px;
+        margin: 22px 0;
+      }
+      .box {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 5px;
+        padding: 23px;
+      }
+      .box p {
+        font-size: 14px;
+        color: var(--muted);
+      }
+      code {
+        font:
+          13px ui-monospace,
+          monospace;
+        background: #24323c;
+        color: #d9e5ea;
+        padding: 3px 6px;
+        border-radius: 3px;
+        overflow-wrap: anywhere;
+      }
+      .schema {
+        display: flex;
+        align-items: center;
+        gap: 17px;
+        flex-wrap: wrap;
+        margin: 26px 0;
+      }
+      .schema .box {
+        flex: 1;
+        min-width: 180px;
+      }
+      .schema .relation {
+        color: var(--accent);
+        font: 14px monospace;
+      }
+      .note {
+        border-left: 2px solid var(--warm);
+        padding: 8px 0 8px 20px;
+        font-size: 14px;
+        color: var(--muted);
+      }
+      .routing {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin: 22px 0;
+      }
+      .routing > div {
+        padding: 18px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        flex: 1;
+        min-width: 190px;
+      }
+      .routing b {
+        display: block;
+        font-size: 14px;
+      }
+      .routing small {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 7px;
+      }
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 14px;
+        margin: 20px 0;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 15px 12px;
+        border-bottom: 1px solid var(--line);
+        vertical-align: top;
+      }
+      th {
+        color: var(--accent);
+        font-weight: 500;
+      }
+      td:first-child {
+        color: var(--text);
+      }
+      td {
+        color: var(--muted);
+      }
+      .port {
+        font:
+          18px ui-monospace,
+          monospace;
+        color: var(--text);
+      }
+      .context-buttons {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin: 24px 0 15px;
+      }
+      .context-buttons button {
+        background: transparent;
+        border: 1px solid var(--line);
+        padding: 10px 17px;
+        color: var(--muted);
+        border-radius: 4px;
+        min-height: 44px;
+      }
+      .context-buttons button[aria-pressed="true"] {
+        background: var(--accent);
+        color: var(--bg);
+        border-color: var(--accent);
+      }
+      .context-panel {
+        padding: 22px;
+        background: var(--panel);
+        border-left: 3px solid var(--accent);
+        min-height: 135px;
+      }
+      .context-panel p {
+        font-size: 14px;
+        color: var(--muted);
+      }
+      .check-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+      }
+      .check {
+        padding: 22px;
+        border: 1px solid var(--line);
+        border-radius: 4px;
+      }
+      .check strong {
+        color: var(--accent);
+        display: block;
+        font-size: 14px;
+      }
+      .check p {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .pending {
+        color: var(--warm);
+      }
+      details {
+        margin: 17px 0;
+        padding: 14px 0;
+        border-bottom: 1px solid var(--line);
+      }
+      summary {
+        cursor: pointer;
+        color: var(--accent);
+      }
+      details p {
+        font-size: 14px;
+        color: var(--muted);
+      }
+      footer {
+        border-top: 1px solid var(--line);
+        padding-top: 22px;
+        font-size: 13px;
+        color: var(--muted);
+        display: flex;
+        gap: 20px;
+        justify-content: space-between;
+      }
+      ul {
+        padding-left: 22px;
+      }
+      li {
+        margin: 8px 0;
+        color: var(--muted);
+      }
+      @media (max-width: 800px) {
+        .flow {
+          grid-template-columns: repeat(3, 1fr);
+        }
+        .step:nth-child(3):after {
+          display: none;
+        }
+        .boundary,
+        .check-grid {
+          grid-template-columns: 1fr;
+        }
+        .wrap {
+          padding: 24px 20px;
+        }
+        .schema {
+          gap: 10px;
+        }
+        .scope {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+        .top {
+          flex-wrap: wrap;
+        }
+        .routing > div {
+          flex-basis: 100%;
+        }
+        .routing > span {
+          transform: rotate(90deg);
+          margin: auto;
+        }
+      }
+      @media (max-width: 480px) {
+        .flow {
+          grid-template-columns: 1fr;
+        }
+        .step:not(:last-child):after {
+          content: "↓";
+          right: 50%;
+          top: auto;
+          bottom: -20px;
+        }
+        .step:nth-child(3):after {
+          display: block;
+        }
+        .flow {
+          gap: 20px;
+        }
+        .schema {
+          flex-direction: column;
+        }
+        .schema .box {
+          width: 100%;
+        }
+        .relation {
+          transform: rotate(90deg);
+        }
+        footer {
+          flex-direction: column;
+        }
+        nav {
+          gap: 14px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <div class="top">
+        <a class="brand" href="http://intelligence.localhost"
+          ><img src="../src/app/icon.svg" alt="" />Intelligence</a
+        ><span>Hướng dẫn dự án · 05.10.2026</span>
+      </div>
+      <header class="hero">
+        <div class="eyebrow">
+          Nhật ký cá nhân / Hướng dẫn cho người và agent
+        </div>
+        <h1>Đúng ngữ cảnh.<br />Đúng lịch sử. Đúng runtime.</h1>
+        <p class="lead">
+          Một bản tin đi từ clipboard tới nhật ký lâu dài. Tài liệu này giúp
+          agent biết cần đọc gì, ứng dụng chạy ở đâu và dữ liệu nào phải được
+          giữ nguyên.
+        </p>
+        <div class="hero-links">
+          <a href="project-guide.md">Đọc nguồn Markdown đầy đủ ↗</a
+          ><a href="../README.md">Setup và format nhập ↗</a
+          ><a href="../plan.md">Trạng thái và roadmap ↗</a>
+        </div>
+      </header>
+      <div class="scope">
+        <strong>Phạm vi V1</strong
+        ><span
+          >Nhập bản tin, Hôm nay, Lịch sử, Tìm kiếm. V2/V3 chờ yêu cầu tiếp
+          theo. Node local, không cần Docker cho app.</span
+        >
+      </div>
+      <nav aria-label="Các phần trong tài liệu">
+        <a href="#flow">Luồng dữ liệu</a><a href="#context">Đọc đúng ngữ cảnh</a
+        ><a href="#runtime">Runtime</a><a href="#audit">Kết quả bootstrap</a
+        ><a href="#checks">Kiểm chứng</a>
+      </nav>
+      <section id="flow">
+        <span class="number">01 / LUỒNG DỮ LIỆU</span>
+        <h2>Từ một bản tin tới một lịch sử đọc.</h2>
+        <p>
+          Preview cho người dùng kiểm tra. Save phân tích lại ở server, rồi lưu
+          toàn bộ brief, item và nguồn trong một transaction.
+        </p>
+        <div
+          class="flow"
+          aria-label="Sao chép, nhập, xem trước, phân tích, lưu, đọc"
+        >
+          <div class="step">
+            <b>ChatGPT</b><small>Sao chép Daily Brief</small>
+          </div>
+          <div class="step">
+            <b>Ô nhập</b><small>Clipboard hoặc paste</small>
+          </div>
+          <div class="step">
+            <b>Xem trước</b><small>Ngày và cảnh báo</small>
+          </div>
+          <div class="step"><b>Parser</b><small>Nhận nhãn rõ ràng</small></div>
+          <div class="step">
+            <b>Transaction</b><small>Drizzle / libSQL</small>
+          </div>
+          <div class="step">
+            <b>Nhật ký</b><small>Đọc và tìm theo ngày</small>
+          </div>
+        </div>
+        <div class="boundary">
+          <div class="box">
+            <h3>Trình duyệt</h3>
+            <p>
+              <code>/import</code> quản lý draft và clipboard. Hôm nay, Lịch sử
+              và Tìm kiếm nhận dữ liệu từ server.
+            </p>
+          </div>
+          <div class="box">
+            <h3>Node server</h3>
+            <p>
+              <code>/api/import</code> kiểm input/origin. Parser xử lý
+              deterministic; repository quản lý transaction và hash. Credentials
+              chỉ ở server/scripts, không ở client.
+            </p>
+          </div>
+        </div>
+        <div
+          class="schema"
+          aria-label="Một daily brief có nhiều news item, một news item có nhiều source"
+        >
+          <div class="box">
+            <h3>daily_briefs</h3>
+            <code>raw · date · hash</code>
+            <p>Bản gốc và metadata theo ngày</p>
+          </div>
+          <span class="relation">1 → N</span>
+          <div class="box">
+            <h3>news_items</h3>
+            <code>facts · analysis · impact</code>
+            <p>Tin có thứ tự trong brief</p>
+          </div>
+          <span class="relation">1 → N</span>
+          <div class="box">
+            <h3>sources</h3>
+            <code>url · label</code>
+            <p>Nguồn ghi rõ trong nội dung</p>
+          </div>
+        </div>
+        <p class="note">
+          Raw giữ nguyên. Hash chỉ chuẩn hóa CRLF và trim ngoài cùng. Không nhận
+          diện chắc chắn thì giữ null/unknown và cảnh báo. Cùng ngày có thể có
+          nhiều phiên bản nội dung; nguồn chưa được tự xác minh.
+        </p>
+      </section>
+      <section id="context">
+        <span class="number">02 / KIẾN THỨC THEO NHU CẦU</span>
+        <h2>Mỗi công việc chỉ cần một phần bản đồ.</h2>
+        <p>
+          <a href="../AGENTS.md">AGENTS.md</a> giữ những rule dùng cho hầu hết
+          task. Chọn công việc bên dưới để thấy phần kiến thức cần nạp thêm.
+        </p>
+        <div
+          class="context-buttons"
+          role="group"
+          aria-label="Chọn loại công việc"
+        >
+          <button aria-pressed="true" data-context="import">
+            Sửa luồng nhập</button
+          ><button aria-pressed="false" data-context="ui">Sửa giao diện</button
+          ><button aria-pressed="false" data-context="runtime">
+            Vận hành local</button
+          ><button aria-pressed="false" data-context="scope">
+            Xem phạm vi
+          </button>
+        </div>
+        <div class="context-panel" id="context-panel" aria-live="polite">
+          <strong>Luồng nhập và lưu trữ</strong>
+          <p>
+            Đọc skill
+            <a href="../.agents/skills/intelligence-import/SKILL.md"
+              >intelligence-import</a
+            >, định dạng trong README và đúng lớp parser/repository/API đang
+            sửa. Giữ raw, review warnings, duplicate hash và atomic writes.
+          </p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Nguồn chuẩn</th>
+                <th>Nội dung</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><a href="../AGENTS.md">AGENTS.md</a></td>
+                <td>
+                  Phạm vi V1, bí mật, quy tắc dữ liệu, lệnh và chỉ dẫn đọc tài
+                  liệu
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <a href="../.agents/skills/intelligence-import/SKILL.md"
+                    >Skill import</a
+                  >
+                </td>
+                <td>Quy trình nhập và kiểm tra theo hành vi trên DB tạm</td>
+              </tr>
+              <tr>
+                <td><a href="../README.md">README</a></td>
+                <td>Setup, hợp đồng Markdown, backup/restore</td>
+              </tr>
+              <tr>
+                <td><a href="project-guide.md">Project guide</a></td>
+                <td>Kiến trúc, runtime/proxy, audit và bằng chứng</td>
+              </tr>
+              <tr>
+                <td><a href="../plan.md">plan.md</a></td>
+                <td>Quyết định, limitation, trạng thái V1 và roadmap</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section id="runtime">
+        <span class="number">03 / RUNTIME</span>
+        <h2>Một hostname, một block được đăng ký.</h2>
+        <p>
+          Registry Dev Hub nhận diện project bằng ID
+          <code>intelligence</code> và đường dẫn <code>personal/news</code>.
+          Block dự trữ là <code>15000–15099</code>.
+        </p>
+        <div class="routing">
+          <div>
+            <b
+              ><a href="http://intelligence.localhost"
+                >intelligence.localhost</a
+              ></b
+            ><small>Trình duyệt → HTTP port 80</small>
+          </div>
+          <span aria-hidden="true">→</span>
+          <div>
+            <b>Caddy Dev Hub</b
+            ><small>Proxy Docker có sẵn → host.docker.internal</small>
+          </div>
+          <span aria-hidden="true">→</span>
+          <div>
+            <b><a href="http://127.0.0.1:15000">127.0.0.1:15000</a></b
+            ><small>Next.js Node local</small>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Dịch vụ</th>
+                <th>Port</th>
+                <th>Cách chạy</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>App</td>
+                <td class="port">15000</td>
+                <td>
+                  <code>npm run dev</code> hoặc build rồi <code>npm start</code>
+                </td>
+              </tr>
+              <tr>
+                <td>E2E</td>
+                <td class="port">15090</td>
+                <td>Production server + DB tạm trong Playwright</td>
+              </tr>
+              <tr>
+                <td>Restart check</td>
+                <td class="port">15091</td>
+                <td>Process tạm trong browser test</td>
+              </tr>
+              <tr>
+                <td>Shared proxy</td>
+                <td class="port">80</td>
+                <td>Ingress Dev Hub, ngoài block của project</td>
+              </tr>
+              <tr>
+                <td>Turso / SQLite</td>
+                <td>Không có port local</td>
+                <td>Remote service hoặc file database</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <details>
+          <summary>Cấu hình env, restart và máy thứ hai</summary>
+          <p>
+            <code>.env.local</code> chứa PORT và Turso URL/token. Wrapper
+            <code>scripts/run-next.mjs</code> nạp file bằng dotenv trước CLI
+            Next; biến đã export trong shell ưu tiên hơn file. Đổi cấu hình cần
+            restart. Máy thứ hai dùng cùng Turso URL/token, nhưng phải kiểm
+            registry/port của máy đó. Không có offline sync.
+          </p>
+        </details>
+        <details>
+          <summary>Proxy và phạm vi bind thực tế</summary>
+          <p>
+            App bind 127.0.0.1. Proxy đang publish <code>0.0.0.0:80</code>, rộng
+            hơn loopback của app; bootstrap không đổi publication. Route nằm
+            trong managed section của Caddyfile, được validate trước restart
+            riêng container dev-hub-caddy vì admin API tắt. Không sửa hosts hoặc
+            cài system service. URL trực tiếp hoạt động khi proxy dừng.
+          </p>
+          <p>
+            <code>allowedDevOrigins</code> chỉ thêm intelligence.localhost cho
+            asset/HMR dev. Import API giữ same-origin Host check, không mở CORS.
+          </p>
+        </details>
+      </section>
+      <section id="audit">
+        <span class="number">04 / AUDIT VÀ BOOTSTRAP</span>
+        <h2>Kiến thức được giữ, ngữ cảnh được chia nhỏ.</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Trước bootstrap</th>
+                <th>Sau bootstrap</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Không có AGENTS root/nested; RTK trong chat</td>
+                <td>
+                  AGENTS root: 63 dòng / 3.905 byte, giữ RTK và quy tắc dự án
+                </td>
+              </tr>
+              <tr>
+                <td>README/plan chưa có knowledge routing</td>
+                <td>
+                  Skill import + guide này; README/plan giữ kiến thức hiện có
+                </td>
+              </tr>
+              <tr>
+                <td>Chưa đăng ký Dev Hub; env chọn 5000, mẫu 3000</td>
+                <td>Block 15000–15099, env/tests/proxy đồng bộ</td>
+              </tr>
+              <tr>
+                <td>Port 3000/5000 còn có listener của dịch vụ khác</td>
+                <td>Chỉ chuyển process Next đã xác minh thuộc repo</td>
+              </tr>
+              <tr>
+                <td>lang=vi nhưng labels tiếng Anh; chưa có favicon</td>
+                <td>
+                  Labels tiếng Việt và favicon journal; raw giữ ngôn ngữ gốc
+                </td>
+              </tr>
+              <tr>
+                <td>Không có Git repository</td>
+                <td>Không init, commit hoặc push trong bootstrap</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note">
+          Không có manual dài cần di chuyển destructive. Reuse global
+          project-ai-bootstrap và skill-creator; frontend-design/ui-ux-pro-max
+          dùng khi thiết kế, task-qa-review khi yêu cầu QA. Không tạo bản sao
+          các methodology toàn cục.
+        </p>
+      </section>
+      <section id="checks">
+        <span class="number">05 / KIỂM CHỨNG</span>
+        <h2>Bằng chứng đúng với runtime hiện tại.</h2>
+        <div class="check-grid">
+          <div class="check">
+            <strong>Allocation và proxy config — PASS</strong>
+            <p>
+              Probe 200 socket IPv4/IPv6 toàn block trước/sau reserve; registry
+              không đổi entry cũ; Caddy config hợp lệ.
+            </p>
+          </div>
+          <div class="check">
+            <strong id="validation-status"
+              >Skill, build và workflow — PASS</strong
+            >
+            <p id="validation-detail">
+              Validator hợp lệ; 3 test parser/database và 4 test browser PASS.
+              Production build, startup dev và restart đều đã kiểm chứng.
+            </p>
+          </div>
+          <div class="check">
+            <strong id="runtime-status"
+              >URL trực tiếp và hostname — PASS</strong
+            >
+            <p id="runtime-detail">
+              HTTP IPv4/IPv6 và browser trả đúng trang; favicon tải được.
+              Preview qua proxy giữ same-origin; Dev Hub cũ vẫn phản hồi.
+            </p>
+          </div>
+          <div class="check">
+            <strong class="pending">Turso hai máy — chưa kiểm chứng</strong>
+            <p>
+              Env hiện dùng SQLite file. Credentials remote và kết nối thực trên
+              hai máy chưa có bằng chứng kiểm tra.
+            </p>
+          </div>
+        </div>
+      </section>
+      <footer>
+        <span>Intelligence · tài liệu vận hành local</span
+        ><a href="project-guide.md">Nguồn Markdown và caveats đầy đủ ↗</a>
+      </footer>
+    </main>
+    <script>
+      const descriptions = {
+        import:
+          '<strong>Luồng nhập và lưu trữ</strong><p>Đọc skill <a href="../.agents/skills/intelligence-import/SKILL.md">intelligence-import</a>, định dạng trong README và đúng lớp parser/repository/API đang sửa. Giữ bản gốc, cảnh báo kiểm tra, hash chống trùng và transaction.</p>',
+        ui: "<strong>Giao diện journal</strong><p>Đọc components/page đang sửa. Dùng global frontend-design hoặc ui-ux-pro-max khi cần thiết kế. UI tiếng Việt, dark editorial, favicon hoạt động; giữ nội dung import và giá trị enum gốc.</p>",
+        runtime:
+          '<strong>Registry trước port</strong><p>Đọc phần Runtime trong <a href="project-guide.md">guide</a> và projects.yml ở Dev Hub. Đối chiếu listener/proxy trước thay đổi; startup trong terminal có log. Setup và backup ở README.</p>',
+        scope:
+          '<strong>V1 và roadmap</strong><p><a href="../plan.md">plan.md</a> là nguồn quyết định, trạng thái và limitation. V2/V3 chờ người dùng review và yêu cầu; không tự khởi động các tính năng roadmap.</p>',
+      };
+      document.querySelectorAll("[data-context]").forEach((button) =>
+        button.addEventListener("click", () => {
+          document
+            .querySelectorAll("[data-context]")
+            .forEach((b) =>
+              b.setAttribute("aria-pressed", String(b === button)),
+            );
+          document.getElementById("context-panel").innerHTML =
+            descriptions[button.dataset.context];
+        }),
+      );
+    </script>
+  </body>
+</html>
