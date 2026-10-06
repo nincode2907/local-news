@@ -30,13 +30,13 @@ export default function ImportPage() {
       if (!navigator.clipboard) throw new Error();
       const value = await navigator.clipboard.readText();
       if (!value.trim()) {
-        setMessage("Clipboard trống. Sao chép bản tin hoặc dán bên dưới.");
+        setMessage("Bộ nhớ tạm trống. Sao chép bản tin hoặc dán bên dưới.");
         return;
       }
       change(value);
     } catch {
       setMessage(
-        "Không đọc được clipboard. Hãy dùng Ctrl/Cmd + V vào ô nhập bên dưới.",
+        "Không đọc được bộ nhớ tạm. Hãy dùng Ctrl/Cmd + V vào ô nhập bên dưới.",
       );
     }
   }
@@ -47,7 +47,7 @@ export default function ImportPage() {
     setBusyAction(action);
     setMessage(
       action === "save"
-        ? "Đang lưu bản tin vào database…"
+        ? "Đang lưu bản tin vào nhật ký…"
         : "Đang phân tích bản tin và kiểm tra trùng…",
     );
     try {
@@ -95,13 +95,13 @@ export default function ImportPage() {
   return (
     <>
       <div className="eyebrow">Nhật ký mỗi sáng</div>
-      <h1>Nhập Daily Brief</h1>
+      <h1>Nhập bản tin</h1>
       <p className="intro">Sao chép từ ChatGPT. Xem trước. Lưu vào nhật ký.</p>
       <div className="import-panel">
         <div className="heading-row">
           <label htmlFor="brief">Markdown gốc</label>
           <button onClick={clipboard} disabled={busy} className="secondary">
-            Đọc clipboard
+            Dán từ bộ nhớ tạm
           </button>
         </div>
         <textarea
@@ -109,7 +109,7 @@ export default function ImportPage() {
           disabled={busy}
           value={raw}
           onChange={(e) => change(e.target.value)}
-          placeholder="Dán Daily Brief của bạn vào đây…"
+          placeholder="Dán bản tin Daily Brief của bạn vào đây…"
           rows={14}
         />
         <div className="heading-row">
@@ -142,7 +142,7 @@ export default function ImportPage() {
           disabled={busy}
           onClick={() => send("preview", true)}
         >
-          Dùng Legacy Markdown Parser →
+          Dùng Legacy Markdown Parser (định dạng cũ) →
         </button>
       )}
       {preview && (
@@ -151,7 +151,34 @@ export default function ImportPage() {
             <span>Bản xem trước</span>
             <span>{preview.parsed.items.length} tin</span>
           </div>
-          <p className="notice">{preview.parsed.importMethod}</p>
+          <div
+            className={
+              "import-status " +
+              (preview.parsed.importMethod === "Structured Intelligence Data"
+                ? "structured"
+                : "legacy")
+            }
+          >
+            <div className="import-status-heading">
+              <strong>
+                {preview.parsed.importMethod === "Structured Intelligence Data"
+                  ? "Structured v1"
+                  : "Legacy"}
+              </strong>
+              <span>{preview.parsed.importMethod}</span>
+            </div>
+            <p>
+              {preview.parsed.importMethod === "Structured Intelligence Data"
+                ? "Dữ liệu JSON hợp lệ. Ngày và các tin được lấy từ khối dữ liệu v1; ngày không thể sửa ở đây."
+                : "Đọc từ Markdown theo định dạng cũ. Hãy đối chiếu ngày, các tin và cảnh báo với bản gốc trước khi lưu."}
+            </p>
+            <span className={preview.parsed.needsReview ? "review" : "muted"}>
+              {preview.parsed.needsReview
+                ? `Cần kiểm tra · ${preview.parsed.warnings.length} cảnh báo`
+                : "Không có cảnh báo"}
+              {" · Markdown gốc được giữ nguyên"}
+            </span>
+          </div>
           {preview.duplicate ? (
             <p className="review">
               Bản tin đã tồn tại.{" "}
@@ -185,7 +212,7 @@ export default function ImportPage() {
               )}
               {preview.parsed.model && (
                 <>
-                  <h3>Gợi ý model</h3>
+                  <h3>Gợi ý mô hình</h3>
                   <Markdown>{preview.parsed.model}</Markdown>
                 </>
               )}
@@ -244,7 +271,7 @@ export default function ImportPage() {
           schema_version là 1, date là ngày ISO. Impact nhận very_high, high,
           medium, low, unknown; source dùng name và URL tùy chọn. Metadata có
           thể là null; worth_trying nhận chuỗi cũ hoặc object title/reason. JSON
-          lỗi cần sửa hoặc chọn fallback rõ ràng.
+          lỗi cần sửa hoặc chủ động chọn bộ phân tích Legacy Markdown Parser.
         </p>
       </details>
       <details className="raw">

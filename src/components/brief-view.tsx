@@ -16,11 +16,11 @@ export function BriefView({
   return (
     <>
       <div className="eyebrow">
-        {detail ? "Lịch sử / Daily Brief" : "Bản tin dành cho hôm nay"}{" "}
+        {detail ? "Lịch sử / Bản tin" : "Bản tin dành cho hôm nay"}{" "}
         <span>• {brief.date}</span>
       </div>
       <div className="heading-row">
-        <h1>{detail ? "Daily Brief" : "Điểm tin hôm nay"}</h1>
+        <h1>{detail ? "Bản tin trong ngày" : "Điểm tin hôm nay"}</h1>
         <span className="edition">{brief.items.length} tin</span>
       </div>
       <section className="overview">
@@ -44,13 +44,13 @@ export function BriefView({
         <div className="signals">
           {brief.signal && (
             <section>
-              <h3>Tín hiệu / Xu hướng nổi bật</h3>
+              <h3>Tín hiệu nổi bật</h3>
               <Markdown>{brief.signal}</Markdown>
             </section>
           )}
           {brief.model && (
             <section>
-              <h3>Gợi ý model</h3>
+              <h3>Gợi ý mô hình</h3>
               <Markdown>{brief.model}</Markdown>
             </section>
           )}
@@ -58,7 +58,7 @@ export function BriefView({
       )}
       {brief.needsReview && (
         <details className="review notice">
-          <summary>Cần kiểm tra · {brief.warnings.length} lưu ý</summary>
+          <summary>Cần kiểm tra · {brief.warnings.length} cảnh báo</summary>
           <ul>
             {brief.warnings.map((w, i) => (
               <li key={i}>{w}</li>
@@ -81,8 +81,13 @@ export function BriefView({
           <ul>
             {brief.worthTrying.map((entry, i) => (
               <li key={i}>
-                {typeof entry === "string" ? entry : (
-                  <><strong>{entry.title}</strong>{entry.reason && <> — {entry.reason}</>}</>
+                {typeof entry === "string" ? (
+                  entry
+                ) : (
+                  <>
+                    <strong>{entry.title}</strong>
+                    {entry.reason && <> — {entry.reason}</>}
+                  </>
                 )}
               </li>
             ))}

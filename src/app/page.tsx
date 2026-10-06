@@ -11,9 +11,9 @@ export default async function Today() {
     <div className="empty">
       <div className="eyebrow">Bắt đầu nhật ký của bạn</div>
       <h1>Lưu lại điều đáng chú ý.</h1>
-      <p>Nhập Daily Brief đầu tiên để bắt đầu lịch sử đọc của bạn.</p>
+      <p>Nhập bản tin đầu tiên để bắt đầu lịch sử đọc của bạn.</p>
       <Link className="button" href="/import">
-        Nhập Daily Brief
+        Nhập bản tin
       </Link>
     </div>
   );

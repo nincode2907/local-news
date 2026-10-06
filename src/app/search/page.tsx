@@ -21,7 +21,9 @@ export default async function Search({
     <>
       <div className="eyebrow">Tìm lại thông tin</div>
       <h1>Tìm trong nhật ký</h1>
-      <p className="intro">Đọc lại sự kiện, phân tích và khuyến nghị.</p>
+      <p className="intro">
+        Tìm sự kiện, phân tích và khuyến nghị. Mở bản tin để đọc đầy đủ.
+      </p>
       <form className="search-form">
         <label className="query">
           Từ khóa
@@ -68,11 +70,11 @@ export default async function Search({
       </form>
       <div className="section-label">
         <span>{rows.length} kết quả</span>
-        <span>Mới nhất trước</span>
+        <span>Trích đoạn · Mới nhất trước</span>
       </div>
-      <div className="news-list">
+      <div className="news-list search-results">
         {rows.map((i) => (
-          <NewsCard key={i.id} item={i} />
+          <NewsCard key={i.id} item={i} compact />
         ))}
       </div>
       {!rows.length && (

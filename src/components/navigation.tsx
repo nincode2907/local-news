@@ -1,14 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  BookOpen,
-  CalendarDays,
-  Search,
-  Plus,
-  ArrowUpRight,
-  Files,
-} from "lucide-react";
+import { BookOpen, CalendarDays, Search, Plus } from "lucide-react";
 export function Navigation() {
   const path = usePathname();
   return (
@@ -20,16 +13,20 @@ export function Navigation() {
         </span>
       </Link>
       <div className="nav-label">Nhật ký</div>
-      <nav>
+      <nav aria-label="Nhật ký">
         {[
           { href: "/", label: "Hôm nay", icon: BookOpen },
           { href: "/timeline", label: "Lịch sử", icon: CalendarDays },
           { href: "/search", label: "Tìm kiếm", icon: Search },
-          { href: "/documents", label: "Tài liệu", icon: Files },
         ].map((n) => (
           <Link
             key={n.href}
             href={n.href}
+            aria-current={
+              (n.href === "/" ? path === "/" : path.startsWith(n.href))
+                ? "page"
+                : undefined
+            }
             className={
               (n.href === "/" ? path === "/" : path.startsWith(n.href))
                 ? "active"
@@ -44,13 +41,16 @@ export function Navigation() {
           </Link>
         ))}
       </nav>
-      <Link className="import-link" href="/import">
+      <Link
+        className="import-link"
+        href="/import"
+        aria-current={path === "/import" ? "page" : undefined}
+      >
         <Plus size={18} />
-        Nhập Daily Brief
+        Nhập bản tin
       </Link>
       <div className="sidebar-bottom">
         <span className="status-dot" /> Nhật ký cá nhân{" "}
-        <ArrowUpRight size={14} />
         <small>Mỗi sáng, một bản tin.</small>
       </div>
     </aside>
