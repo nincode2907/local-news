@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 import { connect } from "../../src/lib/connection";
+import { structuredExample } from "../../src/lib/import-example";
 test("Today, timeline detail/raw, search fields and combined filters", async ({
   page,
 }) => {
@@ -216,4 +217,97 @@ test("production restart preserves imported data", async () => {
   } finally {
     await stop(child);
   }
+});
+
+test("structured preview/save is authoritative and duplicate import is safe", async ({
+  page,
+  request,
+}) => {
+  const raw = structuredExample
+    .replace(
+      "# Daily Brief — 2026-10-05",
+      "# Daily Brief — 2030-01-01\n### Markdown heading must not be imported\nFact: Ignore this",
+    )
+    .replace('"date": "2026-10-05"', '"date": "2026-10-02"');
+  await page.goto("/import");
+  await page.getByLabel("Markdown gốc").fill(raw);
+  await page.getByRole("button", { name: "Xem trước bản tin" }).click();
+  await expect(page.locator(".preview")).toContainText(
+    "Structured Intelligence Data",
+  );
+  await expect(page.locator(".preview .news-card")).toHaveCount(1);
+  await expect(page.getByLabel("Ngày của bản tin")).toHaveValue("2026-10-02");
+  await expect(page.getByLabel("Ngày của bản tin")).toBeDisabled();
+  await expect(page.locator(".preview")).toContainText(
+    "Đo mức thay đổi thực tế trên cùng một tác vụ.",
+  );
+  await expect(page.locator(".preview")).toContainText("Tác động: Rất cao");
+  await expect(page.locator(".preview")).toContainText("Google");
+  expect(
+    (
+      await request.post("/api/import", {
+        data: { action: "save", raw, date: "2030-01-01" },
+      })
+    ).status(),
+  ).toBe(400);
+  await page.getByRole("button", { name: "Lưu vào nhật ký" }).click();
+  await expect(page.getByRole("status")).toContainText("Đã lưu bản gốc");
+  const href = await page
+    .getByRole("link", { name: "Mở bản tin đã lưu" })
+    .getAttribute("href");
+  const duplicate = await request.post("/api/import", {
+    data: { action: "save", raw },
+  });
+  expect((await duplicate.json()).duplicate).toBe(true);
+  await page.goto(href!);
+  await expect(page.locator(".news-card")).toHaveCount(1);
+  await expect(page.getByRole("heading", { name: "Đáng thử" })).toBeVisible();
+  await page.getByText("Xem Markdown gốc").click();
+  await expect(page.locator(".raw pre")).toHaveText(raw);
+});
+
+test("invalid JSON warns and requires explicit legacy fallback before saving", async ({
+  page,
+  request,
+}) => {
+  const raw =
+    "# Daily Brief — 2026-10-01\n## Summary\nFallback summary\n---INTELLIGENCE-DATA-START---\n{invalid JSON\n### Fake JSON heading\nFact: Ignore this\n---INTELLIGENCE-DATA-END---\n### Legacy item outside block\nFact: Explicit fallback fact\nImpact: high\nSources: https://example.com";
+  const rejected = await request.post("/api/import", {
+    data: { action: "save", raw },
+  });
+  expect(rejected.status()).toBe(422);
+  expect((await rejected.json()).canFallback).toBe(true);
+  expect(
+    (
+      await request.post("/api/import", {
+        data: { action: "save", raw, allowLegacyFallback: "true" },
+      })
+    ).status(),
+  ).toBe(400);
+  await page.goto("/import");
+  await page.getByLabel("Markdown gốc").fill(raw);
+  await page.getByRole("button", { name: "Xem trước bản tin" }).click();
+  await expect(page.getByRole("status")).toContainText("JSON không hợp lệ");
+  await expect(
+    page.getByRole("button", { name: "Lưu vào nhật ký" }),
+  ).toHaveCount(0);
+  await expect(page.getByLabel("Markdown gốc")).toHaveValue(raw);
+  await page
+    .getByRole("button", { name: "Dùng Legacy Markdown Parser" })
+    .click();
+  await expect(page.locator(".preview")).toContainText(
+    "Legacy Markdown Parser",
+  );
+  await expect(page.locator(".preview .news-card")).toHaveCount(1);
+  await expect(page.locator(".preview")).toContainText(
+    "Legacy item outside block",
+  );
+  await expect(page.locator(".preview .review")).toContainText(
+    "Structured Intelligence Data không hợp lệ",
+  );
+  await page.getByRole("button", { name: "Lưu vào nhật ký" }).click();
+  await expect(page.getByRole("status")).toContainText("Đã lưu bản gốc");
+  await page.getByRole("link", { name: "Mở bản tin đã lưu" }).click();
+  await page.getByText("Xem Markdown gốc").click();
+  await expect(page.locator(".raw pre")).toHaveText(raw);
 });

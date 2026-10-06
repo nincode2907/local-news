@@ -31,7 +31,7 @@ export function BriefView({
         <aside>
           <h3>Mức độ tác động</h3>
           <div className="counts">
-            {["high", "medium", "low", "unknown"].map((k) => (
+            {["very_high", "high", "medium", "low", "unknown"].map((k) => (
               <div key={k}>
                 <strong>{counts[k] || 0}</strong>
                 <span>{impactLabels[k]}</span>
@@ -75,6 +75,20 @@ export function BriefView({
           <NewsCard key={item.id} item={item} />
         ))}
       </div>
+      {brief.worthTrying.length > 0 && (
+        <section className="notice">
+          <h3>Đáng thử</h3>
+          <ul>
+            {brief.worthTrying.map((entry, i) => (
+              <li key={i}>
+                {typeof entry === "string" ? entry : (
+                  <><strong>{entry.title}</strong>{entry.reason && <> — {entry.reason}</>}</>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       <details className="raw">
         <summary>Xem Markdown gốc · được giữ nguyên</summary>
         <pre>{brief.raw}</pre>

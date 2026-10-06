@@ -14,7 +14,7 @@ npm run db:seed # tùy chọn: 3 brief / 7 tin mẫu, có thể chạy lại
 npm run dev
 ```
 
-Mở [Intelligence](http://intelligence.localhost), hoặc URL trực tiếp [127.0.0.1:15000](http://127.0.0.1:15000). Dev Hub đã đăng ký block `15000–15099`: app `15000`, E2E `15090`, restart check `15091`. Chỉ đổi `PORT` sau khi đối chiếu registry; script `dev` và `start` nạp `.env.local` trước khi Next.js khởi động server. `.env.local` hiện có cấu hình local đã migrate/seed để thử ngay. Database file được lưu trên disk, không mất khi restart. Seed là ví dụ minh họa, không phải bản tin đã xác minh.
+Mở [Intelligence](http://intelligence.localhost), hoặc URL trực tiếp [127.0.0.1:15000](http://127.0.0.1:15000). Dev Hub đã đăng ký block `15000–15099`: app `15000`, E2E `15090`, restart check `15091`. Chỉ đổi `PORT` sau khi đối chiếu registry; script `dev` và `start` nạp `.env.local` trước khi Next.js khởi động server. `.env.local` dùng DB local đã migrate; seed mẫu đã được gỡ theo yêu cầu. Database file được lưu trên disk, không mất khi restart. Seed là ví dụ minh họa, không phải bản tin đã xác minh.
 
 ## Turso và máy thứ hai
 
@@ -44,7 +44,78 @@ CLI config: [Turso documentation](https://docs.turso.tech/cli/introduction). Dri
 3. **Xem trước bản tin**, kiểm tra ngày, tin nhận diện và các cảnh báo.
 4. **Lưu vào nhật ký**, mở brief vừa lưu hoặc Hôm nay.
 
-Nên yêu cầu ChatGPT xuất format bên dưới để parser nhận diện chính xác. `YYYY-MM-DD` là ngày brief, không suy diễn ngày hiện tại khi thiếu. Có thể chọn ngày trong preview. Parser nhận nhãn tiếng Anh và tiếng Việt tương đương, nhãn in đậm/bullet, `###` cho tin hoặc `## 1. Title`. Không fetch nguồn hoặc xác minh nội dung. Markdown không rõ cấu trúc được giữ raw và gắn Cần kiểm tra; V1 không có editor sửa structured data.
+Trong lúc lưu, UI báo rõ trạng thái. Server ghi log `[import] started/complete/failed`
+với action và thời gian xử lý, không ghi nội dung brief hay credentials. Request phía
+browser timeout sau 45 giây; nếu gặp timeout, hãy xem preview để kiểm tra duplicate
+trước khi thử lưu lại.
+
+### Structured Intelligence Data — hợp đồng v1 (ưu tiên)
+
+Yêu cầu ChatGPT thêm đúng một khối JSON giữa hai delimiter dành riêng bên dưới.
+JSON hợp lệ là structured representation chính thức: ngày, metadata và items chỉ lấy
+từ JSON, không suy diễn từ heading Markdown. Toàn bộ text dán được giữ nguyên trong
+`raw_content`. Preview hiện `Structured Intelligence Data`.
+
+```text
+---INTELLIGENCE-DATA-START---
+{
+  "schema_version": 1,
+  "date": "2026-10-05",
+  "daily_summary": "Tóm tắt ngày.",
+  "biggest_signal": null,
+  "model_recommendation": null,
+  "items": [
+    {
+      "title": "Tiêu đề tin",
+      "domain": "AI",
+      "category": "Models",
+      "facts": "Sự kiện được ghi rõ.",
+      "analysis": "Vì sao đáng chú ý.",
+      "recommendation": null,
+      "impact": "very_high",
+      "sources": [{ "name": "Google" }]
+    }
+  ],
+  "worth_trying": [
+    { "title": "So sánh hai cấu hình", "reason": "Đo thay đổi trên cùng tác vụ." }
+  ]
+}
+---INTELLIGENCE-DATA-END---
+```
+
+- Mọi key cấp brief trong ví dụ là bắt buộc. `schema_version` chuẩn là số `1`
+  (`"1.0"` cũ vẫn được nhận); `date` là ngày ISO hợp lệ. Ba metadata là chuỗi
+  không trống hoặc `null`.
+- Item cần `title` không trống, `impact` là `very_high/high/medium/low/unknown`,
+  `sources` là array `{name, url?}`. `name` không trống; `url` có thể thiếu/null,
+  hoặc phải là URL HTTP/HTTPS nếu có. Dạng cũ `{url, label}` vẫn được nhận. Nguồn
+  chỉ có tên được hiển thị dạng text và đánh dấu cần kiểm tra URL. Các trường
+  `domain/category/facts/analysis/recommendation` là chuỗi không trống hoặc `null`;
+  bỏ qua các trường này thì giữ `null`, không suy diễn từ Markdown.
+- `items`, `sources`, `worth_trying` có thể rỗng. `worth_trying` nhận chuỗi cũ hoặc
+  object `{title, reason}`; object được lưu và hiển thị nguyên dạng, `reason` có thể
+  là chuỗi hoặc `null`. Thiếu facts/URL nguồn, impact unknown hoặc summary null được
+  đánh dấu cần kiểm tra. Key mở rộng giữ trong raw, chưa trích xuất.
+- Không dùng delimiter dành riêng trong giá trị JSON; không bọc JSON bằng code fence
+  giữa delimiter. JSON/schema/version/marker lỗi chặn save và báo lỗi rõ vị trí.
+  Sửa nội dung hoặc chọn **Dùng Legacy Markdown Parser** để preview lại. Fallback
+  bỏ khối JSON khỏi phần scan, giữ nguyên raw và lưu cảnh báo. Chọn ngày thủ công nếu
+  Markdown không có ngày. Block hợp lệ vẫn được ưu tiên ngay cả khi bật fallback.
+- Save validate/reparse trên server; structured date không được override. API nhận
+  `{action, raw, date?, allowLegacyFallback?: boolean}`; lỗi structured trả HTTP 422
+  cùng `canFallback: true`. Preview chỉ đọc; hash chống trùng giữ cơ chế cũ.
+
+Khi cập nhật app, chạy `npm run db:migrate`: migration thêm `worth_trying` mặc định
+`[]` và cho phép source không có URL; bản rebuild bảng giữ nguyên URL/name đã lưu,
+raw và lịch sử. Không chạy seed để cập nhật.
+
+### Legacy Markdown Parser — tương thích brief cũ
+
+Không có JSON block thì parser cũ vẫn chạy tự động, preview hiện `Legacy Markdown
+Parser`. `YYYY-MM-DD` là ngày brief, không suy diễn ngày hiện tại khi thiếu. Có thể
+chọn ngày trong preview. Parser nhận nhãn EN/VI, nhãn in đậm/bullet, `###` cho tin
+hoặc `## 1. Title`. Không fetch nguồn hay xác minh nội dung. Markdown không rõ cấu
+trúc vẫn giữ raw và gắn Cần kiểm tra; V1 không có editor sửa structured data.
 
 ```markdown
 # Daily Brief — 2026-10-05
@@ -72,7 +143,7 @@ Impact: high
 Sources: [Nguồn](https://example.com)
 ```
 
-Impact: `high`, `medium`, `low` (hoặc `cao`, `trung bình`, `thấp`); thiếu/khác → `unknown`. Domain/category là text mở rộng tự do. Raw giữ nguyên; SHA-256 chuẩn hóa CRLF và khoảng trắng ngoài cùng để chống trùng toàn brief. Hai brief khác nội dung cùng ngày được giữ như hai phiên bản. Hôm nay chọn ngày mới nhất, rồi lần import mới nhất. Không chống trùng theo từng tin.
+Impact: `very_high`, `high`, `medium`, `low` (hoặc `rất cao`, `cao`, `trung bình`, `thấp`); thiếu/khác → `unknown`. Domain/category là text mở rộng tự do. Raw giữ nguyên; SHA-256 chuẩn hóa CRLF và khoảng trắng ngoài cùng để chống trùng toàn brief. Hai brief khác nội dung cùng ngày được giữ như hai phiên bản. Hôm nay chọn ngày mới nhất, rồi lần import mới nhất. Không chống trùng theo từng tin.
 
 ## Migrations, tests và production
 

@@ -9,6 +9,10 @@ export const briefs = sqliteTable(
     summary: text("summary"),
     signal: text("biggest_signal"),
     model: text("model_recommendation"),
+    worthTrying: text("worth_trying", { mode: "json" })
+      .$type<(string | { title: string; reason: string | null })[]>()
+      .notNull()
+      .default([]),
     needsReview: integer("needs_review", { mode: "boolean" }).notNull(),
     warnings: text("warnings", { mode: "json" }).$type<string[]>().notNull(),
     parserVersion: text("parser_version").notNull(),
@@ -46,7 +50,7 @@ export const sources = sqliteTable(
     itemId: text("item_id")
       .notNull()
       .references(() => items.id, { onDelete: "cascade" }),
-    url: text("url").notNull(),
+    url: text("url"),
     label: text("label").notNull(),
   },
   (t) => [index("source_item_idx").on(t.itemId)],

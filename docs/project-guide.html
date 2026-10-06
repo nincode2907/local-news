@@ -447,7 +447,7 @@
         </p>
         <div class="hero-links">
           <a href="project-guide.md">Đọc nguồn Markdown đầy đủ ↗</a
-          ><a href="../README.md">Setup và format nhập ↗</a
+          ><a href="../README.md">Thiết lập và định dạng nhập ↗</a
           ><a href="../plan.md">Trạng thái và roadmap ↗</a>
         </div>
       </header>
@@ -467,8 +467,8 @@
         <span class="number">01 / LUỒNG DỮ LIỆU</span>
         <h2>Từ một bản tin tới một lịch sử đọc.</h2>
         <p>
-          Preview cho người dùng kiểm tra. Save phân tích lại ở server, rồi lưu
-          toàn bộ brief, item và nguồn trong một transaction.
+          Xem trước để người dùng kiểm tra. Khi lưu, server phân tích lại nội
+          dung, rồi lưu toàn bộ brief, item và nguồn trong một transaction.
         </p>
         <div
           class="flow"
@@ -477,13 +477,13 @@
           <div class="step">
             <b>ChatGPT</b><small>Sao chép Daily Brief</small>
           </div>
-          <div class="step">
-            <b>Ô nhập</b><small>Clipboard hoặc paste</small>
-          </div>
+          <div class="step"><b>Ô nhập</b><small>Clipboard hoặc dán</small></div>
           <div class="step">
             <b>Xem trước</b><small>Ngày và cảnh báo</small>
           </div>
-          <div class="step"><b>Parser</b><small>Nhận nhãn rõ ràng</small></div>
+          <div class="step">
+            <b>Parser</b><small>JSON v1 / legacy có nhãn</small>
+          </div>
           <div class="step">
             <b>Transaction</b><small>Drizzle / libSQL</small>
           </div>
@@ -526,10 +526,19 @@
           <span class="relation">1 → N</span>
           <div class="box">
             <h3>sources</h3>
-            <code>url · label</code>
-            <p>Nguồn ghi rõ trong nội dung</p>
+            <code>name · url?</code>
+            <p>URL tùy chọn; tên nguồn được giữ nguyên</p>
           </div>
         </div>
+        <p class="note">
+          Structured Intelligence Data (schema_version 1; vẫn nhận "1.0" cũ) là
+          nguồn chính thức khi có JSON giữa DATA-START/DATA-END; không tạo tin
+          từ heading Markdown. JSON lỗi chặn lưu, cho phép chủ động chọn Legacy
+          Markdown Parser, giữ raw và cảnh báo. Brief cũ dùng legacy tự động.
+          impact hỗ trợ very_high; source có thể chỉ có name; worth_trying nhận
+          object title/reason hoặc chuỗi cũ. Migration cho phép URL null và giữ
+          lịch sử cũ.
+        </p>
         <p class="note">
           Raw giữ nguyên. Hash chỉ chuẩn hóa CRLF và trim ngoài cùng. Không nhận
           diện chắc chắn thì giữ null/unknown và cảnh báo. Cùng ngày có thể có
@@ -564,7 +573,8 @@
             <a href="../.agents/skills/intelligence-import/SKILL.md"
               >intelligence-import</a
             >, định dạng trong README và đúng lớp parser/repository/API đang
-            sửa. Giữ raw, review warnings, duplicate hash và atomic writes.
+            sửa. Giữ bản gốc, cảnh báo kiểm tra, hash chống trùng và
+            transaction.
           </p>
         </div>
         <div class="table-wrap">
@@ -593,7 +603,7 @@
               </tr>
               <tr>
                 <td><a href="../README.md">README</a></td>
-                <td>Setup, hợp đồng Markdown, backup/restore</td>
+                <td>Thiết lập, hợp đồng Markdown, backup/restore</td>
               </tr>
               <tr>
                 <td><a href="project-guide.md">Project guide</a></td>

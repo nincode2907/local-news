@@ -47,16 +47,22 @@ export function NewsCard({
       <footer>
         <span>Nguồn</span>
         {item.sources.length ? (
-          item.sources.map((s) => (
-            <a
-              key={s.url}
-              href={s.url}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {s.label} ↗
-            </a>
-          ))
+          item.sources.map((s, index) =>
+            s.url ? (
+              <a
+                key={`${s.url}-${index}`}
+                href={s.url}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {s.label} ↗
+              </a>
+            ) : (
+              <span key={`${s.label}-${index}`} className="muted">
+                {s.label}
+              </span>
+            ),
+          )
         ) : (
           <span className="muted">Không có nguồn nhận diện được</span>
         )}

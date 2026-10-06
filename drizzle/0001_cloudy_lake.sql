@@ -1,0 +1,1 @@
+ALTER TABLE `daily_briefs` ADD `worth_trying` text DEFAULT '[]' NOT NULL;

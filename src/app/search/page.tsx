@@ -55,7 +55,7 @@ export default async function Search({
             Tác động
             <select aria-label="Tác động" name="impact" defaultValue={f.impact}>
               <option value="">Tất cả mức tác động</option>
-              {["high", "medium", "low", "unknown"].map((v) => (
+              {["very_high", "high", "medium", "low", "unknown"].map((v) => (
                 <option key={v} value={v}>
                   {impactLabels[v]}
                 </option>

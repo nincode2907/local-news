@@ -279,7 +279,8 @@ h3 {
   padding: 2px 8px;
   white-space: nowrap;
 }
-.impact.high {
+.impact.high,
+.impact.very_high {
   color: #e6b391;
   border-color: #6c4b38;
 }
@@ -519,6 +520,48 @@ textarea {
 .preview > h3 {
   margin-top: 20px;
 }
+.documents-intro {
+  color: var(--muted);
+  max-width: 620px;
+  margin: -14px 0 34px;
+}
+.documents-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--border);
+}
+.documents-list li {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 0;
+  padding: 21px 6px;
+  border-bottom: 1px solid var(--border);
+  color: var(--accent);
+}
+.documents-copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+.documents-copy strong {
+  color: var(--text);
+  font-weight: 500;
+}
+.documents-copy small {
+  color: var(--muted);
+  font-size: 12px;
+}
+.documents-list li > a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--accent);
+  white-space: nowrap;
+  font-size: 14px;
+}
 @media (min-width: 1600px) {
   main {
     margin-right: auto;
@@ -621,6 +664,17 @@ textarea {
   }
   .timeline time {
     width: 100%;
+  }
+  .documents-list li {
+    align-items: flex-start;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .documents-copy {
+    flex-basis: calc(100% - 40px);
+  }
+  .documents-list li > a {
+    margin-left: 33px;
   }
   .page-footer {
     flex-direction: column;

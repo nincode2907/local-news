@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="vi">
-      <body>
+      <body suppressHydrationWarning>
         <Navigation />
         <main>
           {children}

@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { importBrief, hashBrief } from "@/lib/repository";
-import { parseBrief, validDate } from "@/lib/parser";
+import { parseBrief, validDate, StructuredDataError } from "@/lib/parser";
 import { briefs } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 export async function POST(request: Request) {
+  const startedAt = Date.now();
   const origin = request.headers.get("origin");
   if (origin) {
     try {
@@ -29,6 +30,8 @@ export async function POST(request: Request) {
     !body ||
     typeof body.raw !== "string" ||
     body.raw.length > 500000 ||
+    (body.allowLegacyFallback !== undefined &&
+      typeof body.allowLegacyFallback !== "boolean") ||
     !["preview", "save"].includes(body.action)
   )
     return NextResponse.json(
@@ -37,10 +40,21 @@ export async function POST(request: Request) {
     );
   let parsed;
   try {
-    parsed = parseBrief(body.raw);
+    parsed = parseBrief(body.raw, {
+      allowLegacyFallback: body.allowLegacyFallback === true,
+    });
   } catch (e) {
+    if (e instanceof StructuredDataError)
+      return NextResponse.json(
+        { error: e.message, canFallback: true },
+        { status: 422 },
+      );
     return NextResponse.json({ error: (e as Error).message }, { status: 400 });
   }
+  console.info("[import] started", {
+    action: body.action,
+    rawLength: body.raw.length,
+  });
   try {
     if (body.action === "preview") {
       const existing = (
@@ -50,6 +64,12 @@ export async function POST(request: Request) {
           .where(eq(briefs.hash, hashBrief(body.raw)))
           .limit(1)
       )[0];
+      console.info("[import] complete", {
+        action: body.action,
+        durationMs: Date.now() - startedAt,
+        itemCount: parsed.items.length,
+        duplicate: !!existing,
+      });
       return NextResponse.json({
         parsed,
         duplicate: !!existing,
@@ -69,12 +89,36 @@ export async function POST(request: Request) {
         { error: "Hãy chọn ngày của brief." },
         { status: 400 },
       );
-    return NextResponse.json(await importBrief(db, body.raw, body.date));
+    if (
+      parsed.importMethod === "Structured Intelligence Data" &&
+      body.date &&
+      body.date !== parsed.date
+    )
+      return NextResponse.json(
+        { error: "Ngày phải khớp date trong Structured Intelligence Data." },
+        { status: 400 },
+      );
+    const result = await importBrief(db, body.raw, body.date, {
+      allowLegacyFallback: body.allowLegacyFallback === true,
+    });
+    console.info("[import] complete", {
+      action: body.action,
+      durationMs: Date.now() - startedAt,
+      itemCount: parsed.items.length,
+      duplicate: result.duplicate,
+    });
+    return NextResponse.json(result);
   } catch (error) {
-    console.error(
-      "Import database operation failed",
-      error instanceof Error ? error.name : "unknown",
-    );
+    const detail =
+      error && typeof error === "object"
+        ? (error as { name?: unknown; code?: unknown })
+        : {};
+    console.error("[import] failed", {
+      action: body.action,
+      durationMs: Date.now() - startedAt,
+      errorName: typeof detail.name === "string" ? detail.name : "unknown",
+      errorCode: typeof detail.code === "string" ? detail.code : undefined,
+    });
     return NextResponse.json(
       {
         error:

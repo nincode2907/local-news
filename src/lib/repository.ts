@@ -1,13 +1,28 @@
 import { createHash, randomUUID } from "node:crypto";
 import { eq, desc, and, sql } from "drizzle-orm";
 import { briefs, items, sources } from "./schema";
-import { parseBrief, validDate } from "./parser";
+import { parseBrief, validDate, type ParseOptions } from "./parser";
 import type { connect } from "./connection";
 type DB = ReturnType<typeof connect>["db"];
+const chunked = <T>(values: T[], size = 100) =>
+  Array.from({ length: Math.ceil(values.length / size) }, (_, index) =>
+    values.slice(index * size, (index + 1) * size),
+  );
 export const hashBrief = (raw: string) =>
   createHash("sha256").update(raw.replace(/\r\n/g, "\n").trim()).digest("hex");
-export async function importBrief(db: DB, raw: string, dateOverride?: string) {
-  const parsed = parseBrief(raw);
+export async function importBrief(
+  db: DB,
+  raw: string,
+  dateOverride?: string,
+  options: ParseOptions = {},
+) {
+  const parsed = parseBrief(raw, options);
+  if (
+    parsed.importMethod === "Structured Intelligence Data" &&
+    dateOverride &&
+    dateOverride !== parsed.date
+  )
+    throw new Error("Ngày phải khớp date trong Structured Intelligence Data.");
   const date = dateOverride || parsed.date;
   if (!date || !validDate(date))
     throw new Error("Hãy chọn ngày hợp lệ (YYYY-MM-DD).");
@@ -19,6 +34,30 @@ export async function importBrief(db: DB, raw: string, dateOverride?: string) {
     .limit(1);
   if (existing[0]) return { id: existing[0].id, duplicate: true };
   const id = randomUUID();
+  const itemRows = parsed.items.map((item, position) => {
+    const itemId = randomUUID();
+    return {
+      row: {
+        id: itemId,
+        briefId: id,
+        position,
+        title: item.title,
+        domain: item.domain,
+        category: item.category,
+        facts: item.facts,
+        analysis: item.analysis,
+        recommendation: item.recommendation,
+        impact: item.impact,
+        raw: item.raw,
+        needsReview: item.needsReview,
+      },
+      sources: item.sources.map((source) => ({
+        id: randomUUID(),
+        itemId,
+        ...source,
+      })),
+    };
+  });
   try {
     await db.transaction(async (tx) => {
       await tx.insert(briefs).values({
@@ -29,34 +68,19 @@ export async function importBrief(db: DB, raw: string, dateOverride?: string) {
         summary: parsed.summary,
         signal: parsed.signal,
         model: parsed.model,
+        worthTrying: parsed.worthTrying,
         needsReview: parsed.needsReview,
         warnings: parsed.warnings,
         parserVersion: parsed.parserVersion,
         createdAt: new Date().toISOString(),
       });
-      for (const [position, item] of parsed.items.entries()) {
-        const itemId = randomUUID();
-        await tx.insert(items).values({
-          id: itemId,
-          briefId: id,
-          position,
-          title: item.title,
-          domain: item.domain,
-          category: item.category,
-          facts: item.facts,
-          analysis: item.analysis,
-          recommendation: item.recommendation,
-          impact: item.impact,
-          raw: item.raw,
-          needsReview: item.needsReview,
-        });
-        if (item.sources.length)
-          await tx
-            .insert(sources)
-            .values(
-              item.sources.map((s) => ({ id: randomUUID(), itemId, ...s })),
-            );
-      }
+      for (const batch of chunked(itemRows.map(({ row }) => row)))
+        await tx.insert(items).values(batch);
+      const sourceRows = itemRows.flatMap(
+        ({ sources: itemSources }) => itemSources,
+      );
+      for (const batch of chunked(sourceRows))
+        await tx.insert(sources).values(batch);
     });
   } catch (error) {
     const raced = await db

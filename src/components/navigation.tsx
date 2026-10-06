@@ -7,6 +7,7 @@ import {
   Search,
   Plus,
   ArrowUpRight,
+  Files,
 } from "lucide-react";
 export function Navigation() {
   const path = usePathname();
@@ -24,6 +25,7 @@ export function Navigation() {
           { href: "/", label: "Hôm nay", icon: BookOpen },
           { href: "/timeline", label: "Lịch sử", icon: CalendarDays },
           { href: "/search", label: "Tìm kiếm", icon: Search },
+          { href: "/documents", label: "Tài liệu", icon: Files },
         ].map((n) => (
           <Link
             key={n.href}

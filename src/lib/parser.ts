@@ -1,3 +1,15 @@
+import {
+  readIntelligenceData,
+  stripIntelligenceBlocks,
+  StructuredDataError,
+} from "./intelligence-data";
+import { validDate } from "./date";
+export { validDate } from "./date";
+export { StructuredDataError } from "./intelligence-data";
+export type ParseOptions = { allowLegacyFallback?: boolean };
+export type WorthTryingEntry =
+  | string
+  | { title: string; reason: string | null };
 export type ParsedItem = {
   title: string;
   domain: string | null;
@@ -8,7 +20,7 @@ export type ParsedItem = {
   impact: string;
   raw: string;
   needsReview: boolean;
-  sources: { url: string; label: string }[];
+  sources: { url: string | null; label: string }[];
 };
 export type ParsedBrief = {
   date: string | null;
@@ -19,6 +31,8 @@ export type ParsedBrief = {
   warnings: string[];
   needsReview: boolean;
   parserVersion: string;
+  importMethod: "Structured Intelligence Data" | "Legacy Markdown Parser";
+  worthTrying: WorthTryingEntry[];
 };
 const aliases: Record<string, string> = {
   summary: "summary",
@@ -50,20 +64,34 @@ const aliases: Record<string, string> = {
   date: "date",
   ngày: "date",
 };
-export function validDate(value: string) {
-  return (
-    /^\d{4}-\d{2}-\d{2}$/.test(value) &&
-    !Number.isNaN(Date.parse(value)) &&
-    new Date(value + "T00:00:00Z").toISOString().slice(0, 10) === value
-  );
-}
-export function parseBrief(raw: string): ParsedBrief {
+export function parseBrief(
+  raw: string,
+  options: ParseOptions = {},
+): ParsedBrief {
   if (!raw.trim())
     throw new Error("Bản tin trống. Hãy dán Markdown trước khi xem trước.");
   if (raw.length > 500000)
     throw new Error("Bản tin quá lớn (tối đa 500.000 ký tự).");
   if (raw.trim().length < 30 || raw.includes("\u0000"))
     throw new Error("Nội dung không hợp lệ. Hãy dán một Daily Brief đầy đủ.");
+  const structured = readIntelligenceData(raw);
+  if (structured?.valid) return structured.parsed;
+  if (structured && !options.allowLegacyFallback)
+    throw new StructuredDataError(structured.error);
+  const legacy = parseLegacyBrief(
+    structured ? stripIntelligenceBlocks(raw) : raw,
+  );
+  if (structured) {
+    legacy.parserVersion = "rules-v1-structured-fallback";
+    legacy.warnings.unshift(
+      `Structured Intelligence Data không hợp lệ: ${structured.error}. Đã chọn Legacy Markdown Parser; khối dữ liệu không được phân tích.`,
+    );
+    legacy.needsReview = true;
+  }
+  return legacy;
+}
+
+function parseLegacyBrief(raw: string): ParsedBrief {
   const warnings: string[] = [];
   const global: Record<string, string> = {};
   const blocks: { title: string; lines: string[] }[] = [];
@@ -154,9 +182,12 @@ export function parseBrief(raw: string): ParsedBrief {
     }
     const impactMap: Record<string, string> = {
       high: "high",
+      very_high: "very_high",
       medium: "medium",
       low: "low",
       cao: "high",
+      "rất cao": "very_high",
+      "very high": "very_high",
       "trung bình": "medium",
       thấp: "low",
     };
@@ -202,5 +233,7 @@ export function parseBrief(raw: string): ParsedBrief {
     warnings,
     needsReview: warnings.length > 0,
     parserVersion: "rules-v1",
+    importMethod: "Legacy Markdown Parser",
+    worthTrying: [],
   };
 }

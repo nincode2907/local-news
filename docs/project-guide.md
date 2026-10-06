@@ -34,23 +34,36 @@ ChatGPT → copy/paste → /import (client)
        / (Hôm nay) · /timeline · /timeline/[id] · /search (server pages)
 ```
 
-| Lớp               | File chính                                                    | Trách nhiệm                                                       |
-| ----------------- | ------------------------------------------------------------- | ----------------------------------------------------------------- |
-| Màn hình          | `src/app`, `src/components`                                   | Đọc journal, form clipboard/paste; UI tiếng Việt                  |
-| Parser            | `src/lib/parser.ts`                                           | Nhãn EN/VI, ngày ISO, impact, explicit source URL; không suy diễn |
-| Import API        | `src/app/api/import/route.ts`                                 | Kiểm input/origin, preview, reparse và save phía server           |
-| Repository        | `src/lib/repository.ts`                                       | Atomic import/hash duplicate, đọc lịch sử và search/filter        |
-| Database          | `src/lib/schema.ts`, `src/lib/db.ts`, `src/lib/connection.ts` | Schema, server-only runtime, libSQL driver                        |
-| Migration/scripts | `drizzle/`, `scripts/`                                        | SQL đã commit; migrate/seed/backup/restore có chủ đích            |
+| Lớp               | File chính                                                    | Trách nhiệm                                                      |
+| ----------------- | ------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Màn hình          | `src/app`, `src/components`                                   | Đọc journal, form clipboard/paste; UI tiếng Việt                 |
+| Parser            | `src/lib/parser.ts`, `src/lib/intelligence-data.ts`           | JSON v1 validated ưu tiên; legacy EN/VI fallback, không suy diễn |
+| Import API        | `src/app/api/import/route.ts`                                 | Kiểm input/origin, preview, reparse và save phía server          |
+| Repository        | `src/lib/repository.ts`                                       | Atomic import/hash duplicate, đọc lịch sử và search/filter       |
+| Database          | `src/lib/schema.ts`, `src/lib/db.ts`, `src/lib/connection.ts` | Schema, server-only runtime, libSQL driver                       |
+| Migration/scripts | `drizzle/`, `scripts/`                                        | SQL đã commit; migrate/seed/backup/restore có chủ đích           |
 
 `daily_briefs` có quan hệ một-nhiều với `news_items`, mỗi item có nhiều `sources`.
 Schema cụ thể là nguồn chuẩn trong `schema.ts`; format input là README. Domain/category
-là text mở rộng; impact lưu high/medium/low/unknown. UI có thể dịch label, giữ identifier.
+là text mở rộng; impact lưu very_high/high/medium/low/unknown. UI có thể dịch
+label, giữ identifier.
 
 Raw Markdown được giữ nguyên. Hash chuẩn hóa CRLF và trim ngoài cùng, không sửa raw;
 unique constraint và transaction bảo vệ import. Cùng ngày có nhiều phiên bản khác
 nội dung. Ngày mới nhất/lần import mới nhất quyết định Hôm nay. Parse không rõ →
 nullable field + cảnh báo cần kiểm tra. Không có tự fetch hoặc xác minh nguồn.
+
+JSON giữa `---INTELLIGENCE-DATA-START---` và `---INTELLIGENCE-DATA-END---` là nguồn
+structured chính thức, version `1` theo README. Khi hợp lệ, không lấy
+items/date/metadata từ Markdown; preview hiện `Structured Intelligence Data`.
+JSON/schema lỗi chặn lưu và yêu cầu sửa hoặc chủ động chọn `Legacy Markdown Parser`.
+Fallback bỏ JSON khỏi phần scan nhưng giữ nguyên raw và cảnh báo. Brief cũ không có
+block dùng legacy tự động. Contract hiện dùng schema version `1` (vẫn nhận `"1.0"`
+cũ), impact `very_high`/`high`/`medium`/`low`/`unknown`, source `{name, url?}`
+(vẫn nhận `{url,label}`), và `worth_trying` dạng object `{title, reason}` hoặc
+chuỗi cũ. Source chỉ có tên được giữ với URL null và cần review; migration 0002
+cho phép dạng này trong DB và giữ nguyên nguồn/hồ sơ cũ. `worth_trying` giữ nguyên
+kiểu phần tử để tương thích lịch sử.
 
 ## Runtime trên máy này
 

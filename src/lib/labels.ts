@@ -1,5 +1,6 @@
 // UI labels only; persisted enum values and query parameters remain stable.
 export const impactLabels: Record<string, string> = {
+  very_high: "Rất cao",
   high: "Cao",
   medium: "Trung bình",
   low: "Thấp",
